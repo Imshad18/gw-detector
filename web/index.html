@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GW Detector</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="base.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="vendor/plotly.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" class="logo"><path d="M2 16 C6 16 6 10 9 10 S12 22 15 22 S18 6 21 6 S24 26 27 26 S29 16 30 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <div><h1>GW Detector</h1><p>Matched-filter search of open LIGO and Virgo data</p></div>
+    </div>
+    <nav>
+      <span class="pill" id="queuePill">Idle</span>
+      <button class="btn small" id="themeBtn">Theme</button>
+    </nav>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="card">
+        <h2>Events</h2>
+        <input id="evSearch" placeholder="Filter: GW150914, 2019, GWTC-3…">
+        <div class="tabs" id="evSort" style="margin-top:8px">
+          <button class="tab on" data-s="snr">Loudest</button><button class="tab" data-s="date">Newest</button><button class="tab" data-s="mass">Heaviest</button>
+        </div>
+        <div id="evList" class="ev-list"></div>
+      </div>
+      <div class="card">
+        <h2>Any time</h2>
+        <p class="muted" style="margin:0 0 8px">Search a stretch of data with no catalogued event: a good null test.</p>
+        <form id="gpsForm" class="row-form"><input id="gpsInput" placeholder="GPS time, e.g. 1126260462"><button class="btn">Search</button></form>
+      </div>
+      <div class="card">
+        <h2>Analyses</h2>
+        <div id="resList" class="res-list"><p class="muted">None yet.</p></div>
+      </div>
+    </aside>
+
+    <main id="main">
+      <div id="emptyView" class="intro card">
+        <h2 class="intro-title">Re-detect black hole mergers from raw detector data</h2>
+        <p>Pick an event on the left. The app downloads the raw strain recorded by LIGO Hanford, LIGO Livingston and Virgo,
+          estimates each detector's noise, and correlates the data with 500+ waveform templates for merging black holes.
+          A detection needs a coincident signal in at least two detectors within the light-travel time between them,
+          a signal shape that matches a merger (χ² test), and a network SNR louder than every one of 400 time-shifted background trials.</p>
+        <p>You then get the whitened signal with the best-fit waveform on top, time-frequency maps where the "chirp" is visible,
+          the estimated chirp mass compared with the published value, and the signal converted to audio.</p>
+        <p class="muted">Data: Gravitational Wave Open Science Center (gwosc.org).</p>
+      </div>
+
+      <div id="runView" class="card hidden">
+        <div class="eyebrow">Running</div>
+        <h2 class="run-title" id="runTitle"></h2>
+        <div class="bar" style="margin-top:12px"><div id="runBar"></div></div>
+        <pre class="console tall" id="runLog"></pre>
+      </div>
+
+      <div id="resultView" class="hidden"></div>
+    </main>
+  </div>
+  <div id="toast" class="toast hidden"></div>
+  <script src="app.js"></script>
+</body>
+</html>

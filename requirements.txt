@@ -1,0 +1,9 @@
+numpy
+scipy
+h5py
+fsspec
+aiohttp
+requests
+gwosc
+fastapi
+uvicorn[standard]

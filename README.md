@@ -14,6 +14,30 @@ run.bat         # Windows
 
 Open http://localhost:8002 and pick an event, or enter any GPS time to search data with no known event.
 
+## Survey: searching for new signals
+
+The Survey tab scans hours to days of an observing run (O1–O4a). It only uses times that pass LIGO's
+CBC data-quality categories 1 and 2, flags hardware injections, keeps the loudest coincident trigger per
+64 s window, and builds a time-slide background so every trigger gets a false-alarm rate. Triggers are
+cross-matched against every GWOSC catalogue and public GraceDB alerts. Surveys can be paused and resumed.
+About 10 minutes of computing per hour of data.
+
+## Contributing a candidate
+
+Every analysis has a Contribute panel:
+
+1. Verification checklist: coincidence, SNR, χ², gating, data quality, hardware injections, catalogue and
+   public-alert cross-match, false-alarm rate.
+2. Candidate package (.zip): LaTeX paper draft with figures (ready for Overleaf or arXiv), full analysis
+   data, draft email and a reproduction script.
+3. Zenodo: uploads the package as a draft under your name and, after confirmation, publishes it with a DOI.
+   Needs a personal access token; uses the Zenodo sandbox until you untick it.
+4. Draft email to the LIGO–Virgo–KAGRA collaboration and independent search groups.
+5. arXiv submission page (submission itself happens on arXiv; first-time authors need an endorsement).
+6. Gravity Spy for glitch-like triggers.
+
+![survey](shots/survey.png)
+
 ## How it works
 
 1. Reads 128 s of 4 kHz strain around the event from each detector (HTTP range reads of the GWOSC

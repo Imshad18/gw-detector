@@ -6,6 +6,7 @@ background with time slides, check the signal shape with a chi-squared test, and
 chirp mass with inspiral-only templates.
 """
 import numpy as np
+import scipy.fft as sfft
 from scipy.ndimage import maximum_filter1d
 from scipy.signal import butter, sosfiltfilt, welch
 from scipy.signal.windows import tukey
@@ -49,13 +50,15 @@ class Detector:
 
     def filter(self, h):
         """Complex SNR time series z(t)/sigma and the template norm sigma."""
-        w = np.where(np.isfinite(self.S), 1 / self.S, 0.0)
-        sigma = np.sqrt(4 * np.sum(np.abs(h) ** 2 * w) * self.df)
+        if not hasattr(self, "_w"):
+            self._w = np.where(np.isfinite(self.S), 1 / self.S, 0.0)
+            self._dw = (self.d * self._w).astype(np.complex64)
+        sigma = np.sqrt(4 * np.sum(np.abs(h) ** 2 * self._w) * self.df)
         if sigma == 0:
             return None, 0.0
-        q = np.zeros(self.n, complex)
-        q[:len(self.f)] = self.d * np.conj(h) * w
-        z = np.fft.ifft(q) * self.n * self.df * 4
+        q = np.zeros(self.n, np.complex64)
+        q[:len(self.f)] = self._dw * np.conj(h).astype(np.complex64)
+        z = sfft.ifft(q, workers=-1, overwrite_x=True) * (self.n * self.df * 4)
         return z / sigma, sigma
 
     def whiten(self, xf, band=(30, 350)):
@@ -119,37 +122,70 @@ def _pool(rho, k):
     return rho[:m].reshape(-1, k).max(1)
 
 
-def search(dets, bank, progress=None):
+_TCACHE = {}
+
+
+def cached_template(f, m1, m2):
+    """Templates only depend on the frequency grid, so a survey computes each one once."""
+    key = (len(f), round(float(f[1]), 9), m1, m2)
+    hit = _TCACHE.get(key)
+    if hit is None:
+        h = W.template(f, m1, m2, f_low=F_LOW)
+        nz = np.flatnonzero(h)
+        i0, i1 = (nz[0], nz[-1] + 1) if len(nz) else (0, 0)
+        hit = (i0, i1, h[i0:i1].astype(np.complex64))
+        if len(_TCACHE) > 4000:
+            _TCACHE.clear()
+        _TCACHE[key] = hit
+    out = np.zeros(len(f), np.complex64)
+    out[hit[0]:hit[1]] = hit[2]
+    return out
+
+
+def search(dets, bank, progress=None, threads=8):
     """Network SNR for every template; keeps pooled SNR series for the time-slide background."""
+    from concurrent.futures import ThreadPoolExecutor
     k = int(round(POOL_S / dets[0].dt))
     lo, hi = dets[0].edge, dets[0].n - dets[0].edge
-    pooled = {d.name: [] for d in dets}
-    net_best = np.zeros(len(bank))
-    peak = np.zeros(len(bank), int)
-    for ti, (m1, m2) in enumerate(bank):
-        if progress and ti % 25 == 0:
-            progress(ti / len(bank), f"Template {ti + 1}/{len(bank)}: {m1:.1f} + {m2:.1f} M☉")
-        series = []
+    f = dets[0].f
+    wins = [2 * int(TRAVEL_S[d.name] / d.dt) + 1 for d in dets]
+
+    def one(mm):
+        h = cached_template(f, mm[0], mm[1])  # same frequency grid for every detector
+        series, pooled_row = [], []
         for d in dets:
-            z, sig = d.filter(W.template(d.f, m1, m2, f_low=F_LOW))
-            rho = np.zeros(d.n) if z is None else np.abs(z)
+            z, _ = d.filter(h)
+            rho = np.zeros(d.n, np.float32) if z is None else np.abs(z).astype(np.float32)
             rho[:lo] = 0
             rho[hi:] = 0
             rho[d.veto] = 0
             series.append(rho)
-            pooled[d.name].append(_pool(rho, k))
-        ref = series[0] ** 2
+            pooled_row.append(_pool(rho, k))
+        ref = series[0].astype(np.float64) ** 2
         count = (series[0] >= COINC_SNR).astype(int)
-        for d, rho in zip(dets[1:], series[1:]):
-            win = 2 * int(TRAVEL_S[d.name] / d.dt) + 1
+        for rho, win in zip(series[1:], wins[1:]):
             mx = maximum_filter1d(rho, win)
-            ref = ref + mx ** 2
+            ref += mx.astype(np.float64) ** 2
             count += mx >= COINC_SNR
         net = np.sqrt(ref)
         if len(dets) > 1:
             net[count < 2] = 0  # require a coincident trigger in at least two detectors
-        peak[ti] = int(np.argmax(net))
-        net_best[ti] = net[peak[ti]]
+        i = int(np.argmax(net))
+        return net[i], i, pooled_row
+
+    for d in dets:  # build cached weights before threads start
+        d.filter(np.zeros(len(f), complex))
+    net_best = np.zeros(len(bank))
+    peak = np.zeros(len(bank), int)
+    pooled = {d.name: [None] * len(bank) for d in dets}
+    with ThreadPoolExecutor(threads) as ex:
+        for ti, (nb, i, rows) in enumerate(ex.map(one, bank)):
+            if progress and ti % 25 == 0:
+                m1, m2 = bank[ti]
+                progress(ti / len(bank), f"Template {ti + 1}/{len(bank)}: {m1:.1f} + {m2:.1f} M☉")
+            net_best[ti], peak[ti] = nb, i
+            for d, row in zip(dets, rows):
+                pooled[d.name][ti] = row
     for name in pooled:
         pooled[name] = np.array(pooled[name], dtype=np.float32)
     return net_best, peak, pooled

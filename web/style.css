@@ -49,3 +49,35 @@ details.log summary { cursor: pointer; color: var(--muted); }
   .verdict { flex-wrap: wrap; }
   .verdict-actions { margin-left: 0; }
 }
+
+.side-tabs { width: 100%; display: flex; }
+.side-tabs .tab { flex: 1; padding: 6px; }
+.side-pane { display: flex; flex-direction: column; gap: 12px; }
+.survey-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: end; }
+.survey-form input, .survey-form select { width: 100%; }
+.sv-item { padding: 8px 9px; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; font-size: 12.5px; }
+.sv-item:hover { background: var(--panel-2); }
+.sv-item.active { border-color: var(--text); }
+.sv-item b { font: 500 12.5px var(--mono); }
+.sv-item .bar { margin-top: 6px; }
+.contrib { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.check { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); align-items: start; }
+.check:first-child { border-top: 0; }
+.check .nm { font-weight: 500; }
+.check .dt { color: var(--muted); font-size: 12px; }
+.check .vl { font-family: var(--mono); font-size: 12px; text-align: right; }
+.dot { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; font-size: 11px; font-weight: 700; color: #fff; }
+.dot.pass { background: var(--pass); } .dot.warn { background: var(--warn); } .dot.fail { background: var(--fail); } .dot.info { background: var(--info); }
+.steps { counter-reset: st; display: flex; flex-direction: column; gap: 12px; }
+.step { border: 1px solid var(--line); border-radius: 6px; padding: 12px; counter-increment: st; }
+.step h4 { margin: 0 0 4px; font-size: 14px; }
+.step h4::before { content: counter(st) ". "; color: var(--accent); font-family: var(--mono); }
+.step p { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.step .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.author { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.author input { width: 100%; }
+.email-box { width: 100%; height: 220px; font: 12px var(--mono); margin-top: 8px; }
+.ok-note { color: var(--pass); font-size: 13px; }
+.err-note { color: var(--fail); font-size: 13px; }
+.verdict.tone-known { --tone: var(--info); }
+@media (max-width: 1000px) { .contrib { grid-template-columns: 1fr; } }

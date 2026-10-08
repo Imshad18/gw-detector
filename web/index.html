@@ -24,18 +24,34 @@
 
   <div class="layout">
     <aside class="sidebar">
-      <div class="card">
-        <h2>Events</h2>
-        <input id="evSearch" placeholder="Filter: GW150914, 2019, GWTC-3…">
-        <div class="tabs" id="evSort" style="margin-top:8px">
-          <button class="tab on" data-s="snr">Loudest</button><button class="tab" data-s="date">Newest</button><button class="tab" data-s="mass">Heaviest</button>
+      <div class="tabs side-tabs" id="sideTabs"><button class="tab on" data-v="events">Known events</button><button class="tab" data-v="survey">Survey (blind search)</button></div>
+      <div id="sideEvents" class="side-pane">
+        <div class="card">
+          <h2>Events</h2>
+          <input id="evSearch" placeholder="Filter: GW150914, 2019, GWTC-3…">
+          <div class="tabs" id="evSort" style="margin-top:8px">
+            <button class="tab on" data-s="snr">Loudest</button><button class="tab" data-s="date">Newest</button><button class="tab" data-s="mass">Heaviest</button>
+          </div>
+          <div id="evList" class="ev-list"></div>
         </div>
-        <div id="evList" class="ev-list"></div>
+        <div class="card">
+          <h2>Any time</h2>
+          <p class="muted" style="margin:0 0 8px">Search a stretch of data with no catalogued event: a good null test.</p>
+          <form id="gpsForm" class="row-form"><input id="gpsInput" placeholder="GPS time, e.g. 1126260462"><button class="btn">Search</button></form>
+        </div>
       </div>
-      <div class="card">
-        <h2>Any time</h2>
-        <p class="muted" style="margin:0 0 8px">Search a stretch of data with no catalogued event: a good null test.</p>
-        <form id="gpsForm" class="row-form"><input id="gpsInput" placeholder="GPS time, e.g. 1126260462"><button class="btn">Search</button></form>
+      <div id="sideSurvey" class="side-pane hidden">
+        <div class="card">
+          <h2>New survey</h2>
+          <p class="muted" style="margin:0 0 8px">Scan hours or days of data for signals nobody has reported. Only times passing LIGO's data-quality checks are analysed. Roughly 10 minutes of computing per hour of data; the false-alarm rate gets more precise the more hours you scan.</p>
+          <div class="survey-form">
+            <label class="field">Observing run<select id="svRun"></select></label>
+            <label class="field">Start (date or GPS)<input id="svStart" placeholder="2019-04-12 or GPS"></label>
+            <label class="field">Hours<input id="svHours" type="number" value="6" min="0.5" step="0.5"></label>
+            <button class="btn primary" id="svCreate">Create</button>
+          </div>
+        </div>
+        <div class="card"><h2>Surveys</h2><div id="svList" class="res-list"><p class="muted">None yet.</p></div></div>
       </div>
       <div class="card">
         <h2>Analyses</h2>
@@ -50,6 +66,7 @@
           estimates each detector's noise, and correlates the data with 500+ waveform templates for merging black holes.
           A detection needs a coincident signal in at least two detectors within the light-travel time between them,
           a signal shape that matches a merger (χ² test), and a network SNR louder than every one of 400 time-shifted background trials.</p>
+        <p>To look for <b>new</b> signals, open the <b>Survey</b> tab: it scans long stretches of public data, measures a false-alarm rate, flags anything not in the catalogues, and every candidate gets a <b>Contribute</b> panel that writes the report, drafts the email and publishes to Zenodo with a DOI.</p>
         <p>You then get the whitened signal with the best-fit waveform on top, time-frequency maps where the "chirp" is visible,
           the estimated chirp mass compared with the published value, and the signal converted to audio.</p>
         <p class="muted">Data: Gravitational Wave Open Science Center (gwosc.org).</p>
@@ -63,6 +80,7 @@
       </div>
 
       <div id="resultView" class="hidden"></div>
+      <div id="surveyView" class="hidden"></div>
     </main>
   </div>
   <div id="toast" class="toast hidden"></div>
